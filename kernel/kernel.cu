@@ -15,9 +15,6 @@
 __global__ 
 #include "../solvers/rk4.cu"
 
-//__global__ 
-//#include "rkf45.cu"
-
 __device__ 
 #include "../ODEs/rhs.c"
 

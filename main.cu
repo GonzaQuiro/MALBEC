@@ -46,8 +46,7 @@ int main(int argc,char **argv)
 	h_px0= (double *)malloc(nBytes);
 	h_px1 = (double *)malloc(nBytes);
 	h_px2= (double *)malloc(nBytes);
-	h_px3 = (double *)malloc(nBytes);
-		
+	h_px3 = (double *)malloc(nBytes);	
 	
 	// Allocate memory for each vector on GPU
 	printf("Allocating device memory on host..\n");
@@ -111,15 +110,16 @@ int main(int argc,char **argv)
 		perror("Error: the output folder does not exist.");
 		return -1;
 	}
-	int i;
 	//Print the initial conditions in the output file
+	int i;	
 	for (i = 0; i < n_ic; i++)
 	{
 		fprintf(fout, "%.8lf %.16lf %.16lf %.16lf %.16lf \n", evol_time, h_x0[i], sqrt(h_x1[i]*h_x1[i]+Rot*Rot)*sin(h_x2[i])*cos(h_x3[i]), 				
 		sqrt(h_x1[i]*h_x1[i]+Rot*Rot)*sin(h_x2[i])*sin(h_x3[i]), h_x1[i]*cos(h_x2[i]));	
 	}
+	evol_time=h+evol_time;
 	printf("Evolving the systems.. \n");
-	do	
+	do
 	{
 		// Executing kernel
 		rk4<<<gridSize,blockSize>>>(Rot, d_x0,d_x1,d_x2,d_x3,d_px0,d_px1,d_px2,d_px3, n_ic, h);
@@ -134,8 +134,6 @@ int main(int argc,char **argv)
 		HANDLE_ERROR(cudaMemcpy(h_px2,d_px2,nBytes,cudaMemcpyDeviceToHost));
 		HANDLE_ERROR(cudaMemcpy(h_px3,d_px3,nBytes,cudaMemcpyDeviceToHost));
 
-		evol_time=h+evol_time;
-		
 		//Print in file the initial conditions in Cartesian Coordinates
 		for (i = 0; i < n_ic; i++)
 		{
@@ -143,8 +141,10 @@ int main(int argc,char **argv)
 			sqrt(h_x1[i]*h_x1[i]+Rot*Rot)*sin(h_x2[i])*sin(h_x3[i]), h_x1[i]*cos(h_x2[i]));
 			
 		}	
-		
+		evol_time=h+evol_time;
 	}while(evol_time <= final_time);
+
+	
 	
 	
 	//Evol: Time Ends
@@ -153,7 +153,7 @@ int main(int argc,char **argv)
 
 	//Close the output file
 	fclose(fout);
-
+			
 	// Release device memory
    	cudaFree(d_x0);
 	cudaFree(d_x1);
@@ -174,7 +174,7 @@ int main(int argc,char **argv)
 	free(h_px2);
 	free(h_px3);
 
-	//Info file.
+	//Log file.
 	printf("Printing info.log file.. \n");
 	FILE *flog = fopen("info.log", "w");
 	fprintf(flog, "Mass: 1, Rot: %lf \n", Rot);
